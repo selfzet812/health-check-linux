@@ -18,7 +18,8 @@ mem() {
   awk '/MemTotal:/ {a=$2} /MemFree:/ {b=$2} END {printf "MemUsed: " int((a - b) / 1024 ) "/" int(a / 1024) " Mb"  }' /proc/meminfo
   echo $'\n\n-------Top_5_Mem_Usage_Proc------------\n'
   awk '/^Name:/ {c=$2} /^Pid:/ {b=$2}  /^VmRSS:/ {int(a=$2 / 1024); print c, b, a " mB"}' /proc/[0-9]*/status  | sort -rnk3 | head -n5
-  echo $'\n-----------END------------'
+  echo $'\n-----------END------------\n'
+
 }
 
 
@@ -26,9 +27,10 @@ mem() {
 
 #DISK STAT
 disk() {
-
+  echo $'\n-------Disk_Usage--------\n'
   echo $'\nFilesystem        Size  Used Avail Use% Mounted on '
   df -h | sort | head -n2
+  echo $'\n-----------END------------\n'
 }
 
 
@@ -37,7 +39,10 @@ disk() {
 #verify state of the default interface is UP
 #check ICMP connectivity to trusted IPs 
 #verify DNS resolution and reachability of google.com
+
+
 network() {
+  echo $'\n---------------NETWORK---------------\n'
   iface=$(awk 'NR == 2 {print $1}' /proc/net/route) #find out the standard interface
   iface_status=$(cat /sys/class/net/$iface/operstate)
   echo "$iface interface status: " "$iface_status" 
@@ -63,6 +68,17 @@ network() {
   fi
   echo "serverIP: " $(curl -s -m 3 checkip.amazonaws.com) #in other case when u have pub_ip at interface info u can use hostname -I  
   echo "hostname        : ""$HOSTNAME"
-
+  echo $'\n---------------END---------------\n'
 }
-"$@"
+
+case "$@" in
+  "")
+    cpu; mem; disk; network 
+    ;;
+  mem|cpu|network|disk)  
+    "$@"
+    ;;
+  *)
+    echo 'unknown command: ' "$@"
+    ;;
+esac
